@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Demo Package: @harmonidata/analog-clockpicker</title>
+  <title>Demo Package: @rsi-ibnusina/analog-clockpicker</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,8 +23,8 @@
     {
       "imports": {
         "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
-        "@harmonidata/analog-clockpicker": "./dist/analog-clockpicker.js",
-        "@harmonidata/analog-clockpicker/vue": "./dist/vue.js"
+        "@rsi-ibnusina/analog-clockpicker": "./dist/analog-clockpicker.js",
+        "@rsi-ibnusina/analog-clockpicker/vue": "./dist/vue.js"
       }
     }
   </script>
@@ -37,7 +37,7 @@
         ✨ NPM Package Build Verified
       </div>
       <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white">
-        Demo Package: <code class="text-indigo-600 dark:text-indigo-400">@harmonidata/analog-clockpicker</code>
+        Demo Package: <code class="text-indigo-600 dark:text-indigo-400">@rsi-ibnusina/analog-clockpicker</code>
       </h1>
       <p class="text-slate-500 dark:text-slate-400 text-sm">
         Pengujian import library dari folder <code class="font-mono bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">dist/</code> (Vanilla JS & Vue 3).
@@ -116,16 +116,16 @@
       </div>
       <div>
         <span class="text-slate-500 block mb-1">// 1. Install via git</span>
-        <span class="text-amber-300">npm install github:harmonidata/analog-clockpicker</span>
+        <span class="text-amber-300">npm install github:rsi-ibnusina/analog-clockpicker</span>
       </div>
       <div>
         <span class="text-slate-500 block mb-1">// 2. Import di Vanilla JS / Laravel / React</span>
-        <span class="text-indigo-300">import</span> { ClockPicker } <span class="text-indigo-300">from</span> <span class="text-emerald-300">'@harmonidata/analog-clockpicker'</span>;
+        <span class="text-indigo-300">import</span> { ClockPicker } <span class="text-indigo-300">from</span> <span class="text-emerald-300">'@rsi-ibnusina/analog-clockpicker'</span>;
         <br/><span class="text-indigo-300">new</span> ClockPicker(<span class="text-emerald-300">'#myInput'</span>, { sound: <span class="text-amber-400">true</span> });
       </div>
       <div>
         <span class="text-slate-500 block mb-1">// 3. Import di Vue 3 / Nuxt 3</span>
-        <span class="text-indigo-300">import</span> { ClockPicker, useClockPicker } <span class="text-indigo-300">from</span> <span class="text-emerald-300">'@harmonidata/analog-clockpicker/vue'</span>;
+        <span class="text-indigo-300">import</span> { ClockPicker, useClockPicker } <span class="text-indigo-300">from</span> <span class="text-emerald-300">'@rsi-ibnusina/analog-clockpicker/vue'</span>;
       </div>
     </div>
 
@@ -133,7 +133,7 @@
 
   <!-- Vanilla Script -->
   <script type="module">
-    import { ClockPicker } from '@harmonidata/analog-clockpicker';
+    import { ClockPicker } from '@rsi-ibnusina/analog-clockpicker';
 
     const output = document.getElementById('vanillaOutput');
     const picker = new ClockPicker('#vanillaInput', {
@@ -148,7 +148,7 @@
   <!-- Vue 3 Script -->
   <script type="module">
     import { createApp, ref } from 'vue';
-    import { ClockPicker } from '@harmonidata/analog-clockpicker/vue';
+    import { ClockPicker } from '@rsi-ibnusina/analog-clockpicker/vue';
 
     createApp({
       components: {

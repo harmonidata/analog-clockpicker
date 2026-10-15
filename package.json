@@ -1,5 +1,5 @@
 {
-  "name": "@harmonidata/analog-clockpicker",
+  "name": "@rsi-ibnusina/analog-clockpicker",
   "version": "1.0.0",
   "description": "Smooth analog clock picker with rotational animation and dropdown popover for Tailwind CSS (Vanilla JS + Vue 3)",
   "type": "module",
@@ -43,16 +43,16 @@
     "composable",
     "vanilla-js"
   ],
-  "author": "HarmoniData",
+  "author": "RSI Ibnu Sina",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/harmonidata/analog-clockpicker.git"
+    "url": "git+https://github.com/rsi-ibnusina/analog-clockpicker.git"
   },
   "bugs": {
-    "url": "https://github.com/harmonidata/analog-clockpicker/issues"
+    "url": "https://github.com/rsi-ibnusina/analog-clockpicker/issues"
   },
-  "homepage": "https://github.com/harmonidata/analog-clockpicker#readme",
+  "homepage": "https://github.com/rsi-ibnusina/analog-clockpicker#readme",
   "peerDependencies": {
     "vue": "^3.0.0"
   },

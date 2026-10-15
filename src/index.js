@@ -1,5 +1,5 @@
 /**
- * @harmonidata/analog-clockpicker
+ * @rsi-ibnusina/analog-clockpicker
  * Analog Clock Picker with smooth rotational animation for Tailwind CSS
  */
 

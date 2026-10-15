@@ -1,4 +1,4 @@
-# @harmonidata/analog-clockpicker
+# @rsi-ibnusina/analog-clockpicker
 
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
@@ -75,17 +75,17 @@ Pilih metode instalasi sesuai kebutuhan proyek Anda:
 
 ```bash
 # Langsung dari GitHub Repository
-npm install github:harmonidata/analog-clockpicker
+npm install github:rsi-ibnusina/analog-clockpicker
 
 # Atau jika menggunakan Yarn / PNPM
-yarn add github:harmonidata/analog-clockpicker
-pnpm add github:harmonidata/analog-clockpicker
+yarn add github:rsi-ibnusina/analog-clockpicker
+pnpm add github:rsi-ibnusina/analog-clockpicker
 ```
 
 ### Menggunakan NPM Registry
 
 ```bash
-npm install @harmonidata/analog-clockpicker
+npm install @rsi-ibnusina/analog-clockpicker
 ```
 
 ---
@@ -108,8 +108,8 @@ Hubungkan elemen input dengan `ClockPicker`:
 </div>
 
 <script type="module">
-  import { ClockPicker } from '@harmonidata/analog-clockpicker';
-  import '@harmonidata/analog-clockpicker/style.css';
+  import { ClockPicker } from '@rsi-ibnusina/analog-clockpicker';
+  import '@rsi-ibnusina/analog-clockpicker/style.css';
 
   const picker = new ClockPicker('#timeInput', {
     mode: 'dropdown',     // 'dropdown' | 'modal' | 'inline'
@@ -142,8 +142,8 @@ Komponen siap pakai dengan dukungan penuh `v-model`:
 ```vue
 <script setup>
 import { ref } from 'vue';
-import { ClockPicker } from '@harmonidata/analog-clockpicker/vue';
-import '@harmonidata/analog-clockpicker/style.css';
+import { ClockPicker } from '@rsi-ibnusina/analog-clockpicker/vue';
+import '@rsi-ibnusina/analog-clockpicker/style.css';
 
 const selectedTime = ref('10:30 AM');
 
@@ -182,7 +182,7 @@ Gunakan composable jika Anda ingin membangun antarmuka jam kustom secara mandiri
 
 ```vue
 <script setup>
-import { useClockPicker } from '@harmonidata/analog-clockpicker/vue';
+import { useClockPicker } from '@rsi-ibnusina/analog-clockpicker/vue';
 
 const {
   hours,
@@ -273,7 +273,7 @@ Bagi Anda yang ingin berkontribusi atau menguji coba secara lokal:
 
 ```bash
 # 1. Kloning repositori
-git clone https://github.com/harmonidata/analog-clockpicker.git
+git clone https://github.com/rsi-ibnusina/analog-clockpicker.git
 cd analog-clockpicker
 
 # 2. Pasang dependensi
@@ -291,7 +291,7 @@ npm run build
 ## 🤝 Kontribusi
 
 Kontribusi, pelaporan bug, dan saran fitur baru sangat kami apresiasi!
-Silakan buka [Issue](https://github.com/harmonidata/analog-clockpicker/issues) atau ajukan [Pull Request](https://github.com/harmonidata/analog-clockpicker/pulls).
+Silakan buka [Issue](https://github.com/rsi-ibnusina/analog-clockpicker/issues) atau ajukan [Pull Request](https://github.com/rsi-ibnusina/analog-clockpicker/pulls).
 
 1. Fork repositori ini
 2. Buat branch fitur baru (`git checkout -b feature/fitur-keren`)
@@ -305,4 +305,4 @@ Silakan buka [Issue](https://github.com/harmonidata/analog-clockpicker/issues) a
 
 Didistribusikan di bawah lisensi MIT. Lihat berkas [LICENSE](./LICENSE) untuk informasi lebih lanjut.
 
-Copyright &copy; 2026 [HarmoniData](https://github.com/harmonidata). All rights reserved.
+Copyright &copy; 2026 [RSI Ibnu Sina](https://github.com/rsi-ibnusina). All rights reserved.

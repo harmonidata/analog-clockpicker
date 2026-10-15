@@ -1,5 +1,5 @@
 /**
- * Vue 3 Adapter for @harmonidata/analog-clockpicker
+ * Vue 3 Adapter for @rsi-ibnusina/analog-clockpicker
  */
 
 import ClockPicker from './ClockPicker.vue';
