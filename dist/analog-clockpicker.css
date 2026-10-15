@@ -1,0 +1,2 @@
+.font-mono-num{font-variant-numeric:tabular-nums;font-family:JetBrains Mono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}.no-select{-webkit-user-select:none;user-select:none;touch-action:none}.hand-transition{transition:transform .22s cubic-bezier(.34,1.56,.64,1)}.dial-fade-enter{animation:.25s ease-out forwards twClockDialFadeIn}@keyframes twClockDialFadeIn{0%{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+/*$vite$:1*/

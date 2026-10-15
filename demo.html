@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demo Package: @harmonidata/analog-clockpicker</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS v4 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- ClockPicker Base Styles -->
+  <link rel="stylesheet" href="./dist/style.css" />
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  </style>
+
+  <!-- Importmap so bare imports work in browser without bundler -->
+  <script type="importmap">
+    {
+      "imports": {
+        "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
+        "@harmonidata/analog-clockpicker": "./dist/analog-clockpicker.js",
+        "@harmonidata/analog-clockpicker/vue": "./dist/vue.js"
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen p-6 sm:p-12">
+  <div class="max-w-4xl mx-auto space-y-8">
+    
+    <header class="text-center space-y-2">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
+        ✨ NPM Package Build Verified
+      </div>
+      <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white">
+        Demo Package: <code class="text-indigo-600 dark:text-indigo-400">@harmonidata/analog-clockpicker</code>
+      </h1>
+      <p class="text-slate-500 dark:text-slate-400 text-sm">
+        Pengujian import library dari folder <code class="font-mono bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">dist/</code> (Vanilla JS & Vue 3).
+      </p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- SECTION 1: VANILLA JAVASCRIPT DEMO -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white">1. Vanilla JS Library</h2>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Menggunakan <code class="text-indigo-500 font-mono">new ClockPicker(selector, options)</code> dari file <code class="font-mono">dist/analog-clockpicker.js</code>.
+        </p>
+
+        <div class="pt-2">
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+            Kolom Input (Klik untuk Buka Dropdown):
+          </label>
+          <div class="relative">
+            <input 
+              id="vanillaInput" 
+              type="text" 
+              readonly 
+              value="10:30 AM" 
+              class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-mono-num text-sm rounded-2xl px-4 py-3 cursor-pointer shadow-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs font-mono-num space-y-1">
+          <div class="text-slate-400">Status Live:</div>
+          <div id="vanillaOutput" class="text-indigo-600 dark:text-indigo-400 font-semibold">10:30 AM</div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: VUE 3 ADAPTER DEMO -->
+      <div id="vueApp" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white">2. Vue 3 Component</h2>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Menggunakan <code class="text-emerald-500 font-mono">&lt;ClockPicker v-model="..." /&gt;</code> dari file <code class="font-mono">dist/vue.js</code>.
+        </p>
+
+        <div class="pt-2">
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">
+            Vue Component Trigger:
+          </label>
+          <clock-picker 
+            v-model="vueTime" 
+            mode="dropdown"
+            :sound="true"
+            @change="onVueChange"
+          ></clock-picker>
+        </div>
+
+        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs font-mono-num space-y-1">
+          <div class="text-slate-400">Reactive v-model:</div>
+          <div class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ vueTime }}</div>
+          <div class="text-[11px] text-slate-500 font-sans capitalize">{{ indoDesc }}</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CODE SNIPPET SHOWCASE -->
+    <div class="bg-slate-900 text-slate-200 rounded-3xl p-6 border border-slate-800 text-xs font-mono space-y-4 shadow-xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <span class="font-bold text-white text-sm">💡 Cara Pasang di Proyek Lain (npm install)</span>
+        <span class="text-emerald-400">Siap Dipakai</span>
+      </div>
+      <div>
+        <span class="text-slate-500 block mb-1">// 1. Install via git</span>
+        <span class="text-amber-300">npm install github:harmonidata/analog-clockpicker</span>
+      </div>
+      <div>
+        <span class="text-slate-500 block mb-1">// 2. Import di Vanilla JS / Laravel / React</span>
+        <span class="text-indigo-300">import</span> { ClockPicker } <span class="text-indigo-300">from</span> <span class="text-emerald-300">'@harmonidata/analog-clockpicker'</span>;
+        <br/><span class="text-indigo-300">new</span> ClockPicker(<span class="text-emerald-300">'#myInput'</span>, { sound: <span class="text-amber-400">true</span> });
+      </div>
+      <div>
+        <span class="text-slate-500 block mb-1">// 3. Import di Vue 3 / Nuxt 3</span>
+        <span class="text-indigo-300">import</span> { ClockPicker, useClockPicker } <span class="text-indigo-300">from</span> <span class="text-emerald-300">'@harmonidata/analog-clockpicker/vue'</span>;
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Vanilla Script -->
+  <script type="module">
+    import { ClockPicker } from '@harmonidata/analog-clockpicker';
+
+    const output = document.getElementById('vanillaOutput');
+    const picker = new ClockPicker('#vanillaInput', {
+      mode: 'dropdown',
+      initialTime: '10:30 AM',
+      onChange: (t) => {
+        output.textContent = `${t.time12} (${t.timeIndo})`;
+      }
+    });
+  </script>
+
+  <!-- Vue 3 Script -->
+  <script type="module">
+    import { createApp, ref } from 'vue';
+    import { ClockPicker } from '@harmonidata/analog-clockpicker/vue';
+
+    createApp({
+      components: {
+        ClockPicker
+      },
+      setup() {
+        const vueTime = ref('12:30 PM');
+        const indoDesc = ref('Pukul setengah satu siang');
+
+        function onVueChange(data) {
+          indoDesc.value = data.indo;
+        }
+
+        return { vueTime, indoDesc, onVueChange };
+      }
+    }).mount('#vueApp');
+  </script>
+</body>
+</html>

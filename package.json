@@ -1,0 +1,72 @@
+{
+  "name": "@harmonidata/analog-clockpicker",
+  "version": "1.0.0",
+  "description": "Smooth analog clock picker with rotational animation and dropdown popover for Tailwind CSS (Vanilla JS + Vue 3)",
+  "type": "module",
+  "main": "./dist/analog-clockpicker.cjs",
+  "module": "./dist/analog-clockpicker.js",
+  "types": "./dist/index.d.ts",
+  "style": "./dist/analog-clockpicker.css",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/analog-clockpicker.js",
+      "require": "./dist/analog-clockpicker.cjs"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.js",
+      "require": "./dist/vue.cjs"
+    },
+    "./style.css": "./dist/analog-clockpicker.css"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "vite build"
+  },
+  "keywords": [
+    "clockpicker",
+    "analog-clockpicker",
+    "timepicker",
+    "analog",
+    "analog-clock",
+    "clock",
+    "tailwindcss",
+    "vue",
+    "vue3",
+    "composable",
+    "vanilla-js"
+  ],
+  "author": "HarmoniData",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harmonidata/analog-clockpicker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harmonidata/analog-clockpicker/issues"
+  },
+  "homepage": "https://github.com/harmonidata/analog-clockpicker#readme",
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "puppeteer-core": "^25.14.0",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.4",
+    "vue": "^3.5.44"
+  }
+}

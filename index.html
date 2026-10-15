@@ -1,0 +1,2412 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analog Clock Picker - Tailwind CSS</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS v4 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <style type="text/tailwindcss">
+    @custom-variant dark (&:where(.dark, .dark *));
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    /* Disable text selection during drag on clock face */
+    .no-select {
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    /* Smooth rotation transition when not dragging */
+    .hand-transition {
+      transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    /* Dial numbers fade transition when switching hour/minute */
+    .dial-fade-enter {
+      animation: dialFadeIn 0.25s ease-out forwards;
+    }
+    @keyframes dialFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.92);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Navbar / Header -->
+  <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-900/80 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            Analog Clock Picker
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
+              Tailwind v4
+            </span>
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Pilih jam & menit dengan UI analog bulat interaktif</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Dark Mode Toggle Button -->
+        <button id="themeToggleBtn" type="button" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/30" aria-label="Toggle Dark Mode">
+          <!-- Sun Icon (shown in dark mode) -->
+          <svg id="sunIcon" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <!-- Moon Icon (shown in light mode) -->
+          <svg id="moonIcon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- LEFT: The Main Analog Clock Picker Widget Card -->
+      <section class="lg:col-span-7 flex flex-col items-center">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/40 overflow-hidden transition-all duration-300">
+          
+          <!-- Card Header & Digital Display -->
+          <div class="p-6 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900/90 dark:to-slate-900 border-b border-slate-100 dark:border-slate-800/80">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                Pilih Waktu (Analog)
+              </span>
+
+              <!-- Sound, 12h/24h & View Mode Quick Controls -->
+              <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <!-- Sound Toggle -->
+                <button id="soundToggleBtn" type="button" class="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer" title="Suara Detik (Sound FX)">
+                  <svg id="soundIconOn" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                  <svg id="soundIconOff" class="w-4 h-4 hidden text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                  </svg>
+                </button>
+                <!-- 12h / 24h Switcher Button -->
+                <button id="formatToggleBtn" type="button" class="text-xs font-bold px-2 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer">
+                  12H
+                </button>
+                <!-- Main Card View Mode: Analog vs Dropdown List -->
+                <button id="mainViewToggleBtn" type="button" class="text-xs font-bold px-2 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer flex items-center gap-1" title="Beralih ke tampilan Dropdown List">
+                  <span id="mainViewToggleLabel">List</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Big Digital Display (Interactive Switchers) -->
+            <div class="flex items-center justify-center gap-3 select-none">
+              <div class="flex items-center">
+                <!-- Hour Button -->
+                <button id="hourDisplayBtn" type="button" class="text-5xl sm:text-6xl font-bold font-mono-num px-4 py-2 rounded-2xl transition-all duration-200 cursor-pointer bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-105 ring-2 ring-indigo-500/20" aria-label="Pilih Jam">
+                  10
+                </button>
+
+                <!-- Separator Colon -->
+                <span class="text-4xl sm:text-5xl font-bold text-slate-400 dark:text-slate-500 px-1 font-mono-num animate-pulse">:</span>
+
+                <!-- Minute Button -->
+                <button id="minuteDisplayBtn" type="button" class="text-5xl sm:text-6xl font-bold font-mono-num px-4 py-2 rounded-2xl transition-all duration-200 cursor-pointer bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700" aria-label="Pilih Menit">
+                  30
+                </button>
+              </div>
+
+              <!-- AM / PM Segmented Selector (Shown in 12-Hour Mode) -->
+              <div id="ampmContainer" class="flex flex-col gap-1.5 ml-2">
+                <button id="btnAM" type="button" class="text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer bg-indigo-600 text-white shadow-sm">
+                  AM
+                </button>
+                <button id="btnPM" type="button" class="text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+                  PM
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Mode Indicators (Tab Pills) -->
+            <div class="flex justify-center mt-5">
+              <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-medium">
+                <button id="tabHour" type="button" class="px-5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm">
+                  Atur Jam (Hours)
+                </button>
+                <button id="tabMinute" type="button" class="px-5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
+                  Atur Menit (Minutes)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clock Face Area (Analog Dial vs Dropdown List) -->
+          <div class="p-6 sm:p-8 flex flex-col items-center justify-center bg-white dark:bg-slate-900 min-h-[360px]">
+            <!-- View 1: The Clock Circle Dial -->
+            <div id="mainAnalogContainer" class="flex flex-col items-center justify-center w-full">
+              <div 
+                id="clockDial" 
+                class="relative w-[280px] h-[280px] sm:w-[300px] sm:h-[300px] rounded-full bg-slate-50 dark:bg-slate-800/70 border-4 border-slate-150 dark:border-slate-800 shadow-inner flex items-center justify-center no-select cursor-pointer touch-none"
+                role="slider"
+                tabindex="0"
+                aria-label="Analog Clock Face"
+              >
+                <!-- Center Hub / Pivot Pin -->
+                <div class="absolute z-30 w-3.5 h-3.5 rounded-full bg-indigo-600 dark:bg-indigo-500 shadow-md ring-2 ring-white dark:ring-slate-900 pointer-events-none"></div>
+
+                <!-- SVG Canvas for Needle / Clock Hand -->
+                <svg id="clockSvg" class="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 280 280">
+                  <!-- Hand Group (Rotated dynamically) -->
+                  <g id="handGroup" class="hand-transition" transform="rotate(300, 140, 140)">
+                    <!-- Pointer Line -->
+                    <line 
+                      id="handLine" 
+                      x1="140" 
+                      y1="140" 
+                      x2="140" 
+                      y2="42" 
+                      stroke="currentColor" 
+                      stroke-width="2.5" 
+                      stroke-linecap="round"
+                      class="text-indigo-600 dark:text-indigo-500"
+                    />
+                    <!-- Hand Tip Bubble Selector -->
+                    <circle 
+                      id="handBubble" 
+                      cx="140" 
+                      cy="42" 
+                      r="18" 
+                      class="fill-indigo-600 dark:fill-indigo-500 shadow-lg"
+                    />
+                    <!-- Small dot in the tip center (for precise minute selection when between 5-min intervals) -->
+                    <circle 
+                      id="handDot" 
+                      cx="140" 
+                      cy="42" 
+                      r="3.5" 
+                      class="fill-white hidden"
+                    />
+                  </g>
+                </svg>
+
+                <!-- Radial Numbers Container (Populated via JS) -->
+                <div id="dialNumbersContainer" class="absolute inset-0 z-20 pointer-events-none dial-fade-enter">
+                  <!-- Numbers injected here with percentage coordinates -->
+                </div>
+              </div>
+
+              <!-- Hint Text -->
+              <p id="dialInstructionText" class="mt-4 text-xs text-slate-400 dark:text-slate-500 text-center flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                </svg>
+                Klik atau geser jarum jam ke angka yang diinginkan
+              </p>
+            </div>
+
+            <!-- View 2: Dropdown List Columns Mode -->
+            <div id="mainListContainer" class="w-full max-w-sm hidden flex-col items-center justify-center">
+              <div class="grid grid-cols-3 gap-2.5 w-full h-[260px]">
+                <!-- Column Jam -->
+                <div class="flex flex-col bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-1.5">Jam</span>
+                  <div id="mainColHours" class="overflow-y-auto space-y-1 flex-1 pr-1 scroll-smooth"></div>
+                </div>
+                <!-- Column Menit -->
+                <div class="flex flex-col bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-1.5">Menit</span>
+                  <div id="mainColMinutes" class="overflow-y-auto space-y-1 flex-1 pr-1 scroll-smooth"></div>
+                </div>
+                <!-- Column Periode -->
+                <div class="flex flex-col bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-1.5">Periode</span>
+                  <div id="mainColPeriod" class="space-y-1 flex-1 flex flex-col justify-start"></div>
+                </div>
+              </div>
+              <p class="mt-3 text-xs text-slate-400 dark:text-slate-500 text-center">
+                Pilih angka jam & menit dari kolom dropdown di atas
+              </p>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons in Card -->
+          <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+            <button id="btnNow" type="button" class="text-xs font-semibold px-3 py-2 rounded-xl text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 transition cursor-pointer flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Waktu Sekarang
+            </button>
+
+            <div class="flex items-center gap-2">
+              <button id="btnReset" type="button" class="text-xs font-semibold px-3 py-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer">
+                Reset
+              </button>
+              <button id="btnCopyTime" type="button" class="text-xs font-semibold px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                <span id="copyBtnText">Salin Waktu</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- RIGHT: Interactive Playground, Form Demo & Presets -->
+      <section class="lg:col-span-5 flex flex-col gap-6">
+        
+        <!-- Result Summary Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+            Waktu Terpilih
+          </h2>
+          
+          <div class="flex items-baseline gap-2 mb-2">
+            <span id="summaryTimeLarge" class="text-4xl font-extrabold font-mono-num tracking-tight text-slate-900 dark:text-white">
+              10:30
+            </span>
+            <span id="summaryPeriodLarge" class="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+              AM
+            </span>
+            <span class="text-xs text-slate-400 dark:text-slate-500 ml-auto font-mono-num" id="summaryTime24">
+              (10:30 WIB)
+            </span>
+          </div>
+          
+          <p id="summaryTextIndo" class="text-sm text-slate-600 dark:text-slate-300 capitalize mb-4">
+            Pukul sepuluh lewat tiga puluh menit pagi
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl">
+              <span class="text-slate-400 block mb-0.5">Format 12-Jam</span>
+              <span id="meta12h" class="font-mono-num font-semibold text-slate-700 dark:text-slate-200">10:30 AM</span>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl">
+              <span class="text-slate-400 block mb-0.5">Format 24-Jam</span>
+              <span id="meta24h" class="font-mono-num font-semibold text-slate-700 dark:text-slate-200">10:30</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Input Integration Showcase -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md space-y-5">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-bold">
+              ✓
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-slate-900 dark:text-white">
+                Contoh Integrasi Input Form
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Tersedia versi dropdown popover melayang, modal dialog, dan select list.
+              </p>
+            </div>
+          </div>
+
+          <!-- VERSI 1: DROPDOWN POPOVER (Floating Timepicker) -->
+          <div class="relative" id="dropdownPickerWrapper">
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="formDropdownTime" class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                Versi 1: Dropdown Popover (Floating Picker)
+              </label>
+              <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">Melayang di bawah input</span>
+            </div>
+            <div class="relative">
+              <input 
+                id="formDropdownTime" 
+                type="text" 
+                readonly 
+                value="10:30 AM" 
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-mono-num text-sm rounded-2xl px-4 py-3 pl-11 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm hover:border-indigo-400 transition"
+                placeholder="Klik untuk membuka dropdown picker..."
+              />
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <button 
+                id="dropdownToggleBtn" 
+                type="button" 
+                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer"
+                aria-label="Buka / Tutup Dropdown"
+              >
+                <svg id="dropdownChevron" class="w-4 h-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Floating Popover Card -->
+            <div 
+              id="dropdownPopover" 
+              class="absolute left-0 top-full mt-2 z-40 w-full sm:w-[320px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl shadow-indigo-950/25 overflow-hidden hidden transition-all duration-200 origin-top"
+            >
+              <!-- Arrow Caret Notch -->
+              <div class="absolute -top-1.5 left-8 w-3 h-3 bg-indigo-50/80 dark:bg-slate-800 border-t border-l border-slate-200 dark:border-slate-700 rotate-45 z-10"></div>
+
+              <!-- Dropdown Header -->
+              <div class="p-3 bg-gradient-to-b from-indigo-50/80 to-white dark:from-slate-800/80 dark:to-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-1.5 font-mono-num font-bold">
+                  <button id="ddHourBtn" type="button" class="text-xl px-2.5 py-0.5 rounded-lg bg-indigo-600 text-white shadow-sm cursor-pointer">10</button>
+                  <span class="text-slate-400">:</span>
+                  <button id="ddMinuteBtn" type="button" class="text-xl px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer">30</button>
+                  <div id="ddAmPmContainer" class="flex gap-1 ml-1.5">
+                    <button id="ddBtnAM" type="button" class="text-[10px] font-bold px-2 py-1 rounded-md bg-indigo-600 text-white cursor-pointer">AM</button>
+                    <button id="ddBtnPM" type="button" class="text-[10px] font-bold px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-pointer">PM</button>
+                  </div>
+                </div>
+
+                <!-- View Switcher Tabs inside Dropdown -->
+                <div class="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-[11px]">
+                  <button id="ddViewAnalogBtn" type="button" class="px-2 py-0.5 rounded-md font-semibold bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs cursor-pointer">
+                    Analog
+                  </button>
+                  <button id="ddViewListBtn" type="button" class="px-2 py-0.5 rounded-md font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer">
+                    List
+                  </button>
+                </div>
+              </div>
+
+              <!-- View A: Analog Dial (220px) -->
+              <div id="ddAnalogView" class="p-4 flex flex-col items-center justify-center bg-white dark:bg-slate-900">
+                <div 
+                  id="ddClockDial" 
+                  class="relative w-[220px] h-[220px] rounded-full bg-slate-50 dark:bg-slate-800/70 border-4 border-slate-150 dark:border-slate-800 shadow-inner flex items-center justify-center no-select cursor-pointer touch-none"
+                >
+                  <div class="absolute z-30 w-3 h-3 rounded-full bg-indigo-600 ring-2 ring-white dark:ring-slate-900 pointer-events-none"></div>
+                  <svg class="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 220 220">
+                    <g id="ddHandGroup" class="hand-transition" transform="rotate(300, 110, 110)">
+                      <line id="ddHandLine" x1="110" y1="110" x2="110" y2="33" stroke="currentColor" stroke-width="2" class="text-indigo-600 dark:text-indigo-500" />
+                      <circle id="ddHandBubble" cx="110" cy="33" r="15" class="fill-indigo-600 dark:fill-indigo-500 shadow-md" />
+                      <circle id="ddHandDot" cx="110" cy="33" r="2.5" class="fill-white hidden" />
+                    </g>
+                  </svg>
+                  <div id="ddDialNumbers" class="absolute inset-0 z-20 pointer-events-none dial-fade-enter"></div>
+                </div>
+                <p id="ddModeText" class="mt-2 text-[11px] text-slate-400 dark:text-slate-500 text-center">
+                  Klik atau geser angka jam
+                </p>
+              </div>
+
+              <!-- View B: 3 Scrollable Column Dropdowns -->
+              <div id="ddListView" class="p-3 hidden bg-white dark:bg-slate-900">
+                <div class="grid grid-cols-3 gap-2 h-[190px]">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 text-center mb-1">Jam</span>
+                    <div id="ddColHours" class="overflow-y-auto space-y-1 border border-slate-100 dark:border-slate-800 rounded-xl p-1 bg-slate-50/50 dark:bg-slate-800/40 max-h-[160px] scroll-smooth"></div>
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 text-center mb-1">Menit</span>
+                    <div id="ddColMinutes" class="overflow-y-auto space-y-1 border border-slate-100 dark:border-slate-800 rounded-xl p-1 bg-slate-50/50 dark:bg-slate-800/40 max-h-[160px] scroll-smooth"></div>
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 text-center mb-1">AM/PM</span>
+                    <div id="ddColPeriod" class="space-y-1 border border-slate-100 dark:border-slate-800 rounded-xl p-1 bg-slate-50/50 dark:bg-slate-800/40"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dropdown Footer -->
+              <div class="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                <button id="ddBtnNow" type="button" class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+                  Sekarang
+                </button>
+                <div class="flex items-center gap-1.5">
+                  <button id="ddBtnClose" type="button" class="px-2.5 py-1 rounded-lg font-medium text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition cursor-pointer">
+                    Batal
+                  </button>
+                  <button id="ddBtnApply" type="button" class="px-3 py-1 rounded-lg font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition cursor-pointer">
+                    Terapkan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VERSI 2: MODAL DIALOG TRIGGER -->
+          <div class="pt-2">
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="formScheduleTime" class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-violet-500"></span>
+                Versi 2: Modal Dialog (Popup Tengah Layar)
+              </label>
+              <span class="text-[10px] text-slate-400">Modal dengan backdrop</span>
+            </div>
+            <div class="relative">
+              <input 
+                id="formScheduleTime" 
+                type="text" 
+                readonly 
+                value="10:30 AM" 
+                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-mono-num text-sm rounded-2xl px-4 py-3 pl-11 pr-28 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm hover:border-indigo-400 transition"
+                placeholder="Klik untuk pilih waktu..."
+              />
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <button 
+                id="openModalBtn" 
+                type="button" 
+                class="absolute inset-y-1.5 right-1.5 px-3.5 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-semibold rounded-xl transition cursor-pointer flex items-center gap-1 shadow-sm"
+              >
+                Buka Modal
+              </button>
+            </div>
+          </div>
+
+          <!-- VERSI 3: NATIVE HTML SELECT DROPDOWN -->
+          <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              Versi 3: Dropdown Select List Standar (&lt;select&gt;)
+            </label>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <span class="text-[10px] text-slate-400 block mb-1">Jam</span>
+                <select id="nativeSelectHour" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-mono-num font-semibold rounded-xl px-2.5 py-2.5 focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-xs"></select>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 block mb-1">Menit</span>
+                <select id="nativeSelectMinute" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-mono-num font-semibold rounded-xl px-2.5 py-2.5 focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-xs"></select>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 block mb-1">Periode</span>
+                <select id="nativeSelectPeriod" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-xl px-2.5 py-2.5 focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-xs">
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-md">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+            Preset Cepat (Quick Shortcuts)
+          </h2>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" class="preset-btn px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 text-left transition cursor-pointer group" data-hour="7" data-minute="0" data-period="AM">
+              <span class="block text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">🌅 Pagi Hari</span>
+              <span class="text-[11px] font-mono-num text-slate-400">07:00 AM</span>
+            </button>
+            <button type="button" class="preset-btn px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 text-left transition cursor-pointer group" data-hour="12" data-minute="30" data-period="PM">
+              <span class="block text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">☀️ Siang / Istirahat</span>
+              <span class="text-[11px] font-mono-num text-slate-400">12:30 PM</span>
+            </button>
+            <button type="button" class="preset-btn px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 text-left transition cursor-pointer group" data-hour="5" data-minute="15" data-period="PM">
+              <span class="block text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">🌇 Sore Pulang Kerja</span>
+              <span class="text-[11px] font-mono-num text-slate-400">05:15 PM</span>
+            </button>
+            <button type="button" class="preset-btn px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 text-left transition cursor-pointer group" data-hour="9" data-minute="45" data-period="PM">
+              <span class="block text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">🌙 Malam Hari</span>
+              <span class="text-[11px] font-mono-num text-slate-400">09:45 PM</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Features Checklist -->
+        <div class="bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-3xl p-5 text-xs text-indigo-900 dark:text-indigo-200">
+          <h3 class="font-bold flex items-center gap-2 mb-2 text-indigo-700 dark:text-indigo-300">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Fitur Clock Picker:
+          </h3>
+          <ul class="space-y-1.5 list-disc list-inside text-slate-600 dark:text-slate-300">
+            <li><strong>Klik & Drag</strong> jarum jam secara bebas dengan mouse atau jari di HP.</li>
+            <li><strong>Auto-Advance</strong> otomatis beralih ke pemilihan menit setelah jam dipilih.</li>
+            <li><strong>Dual Mode 12H / 24H</strong> (AM/PM atau mode 24 jam dengan ring konsentris).</li>
+            <li><strong>Audio Feedback</strong> suara detik mekanik menggunakan Web Audio API.</li>
+            <li><strong>100% Vanilla JS + Tailwind CSS</strong> tanpa library eksternal yang berat.</li>
+          </ul>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- MODAL DIALOG CLOCK PICKER -->
+  <div id="clockModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-200">
+    <div id="modalDialogCard" class="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-5 bg-gradient-to-b from-indigo-50/50 to-white dark:from-slate-800/50 dark:to-slate-900 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            Pilih Waktu Analog
+          </span>
+          <button id="modalCloseX" type="button" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-lg">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Digital Display -->
+        <div class="flex items-center justify-center gap-2 select-none">
+          <div class="flex items-center">
+            <button id="modalHourBtn" type="button" class="text-4xl font-bold font-mono-num px-3 py-1.5 rounded-xl bg-indigo-600 text-white shadow-md">
+              10
+            </button>
+            <span class="text-3xl font-bold text-slate-400 px-1 font-mono-num">:</span>
+            <button id="modalMinuteBtn" type="button" class="text-4xl font-bold font-mono-num px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+              30
+            </button>
+          </div>
+          <div id="modalAmPmContainer" class="flex flex-col gap-1 ml-2">
+            <button id="modalBtnAM" type="button" class="text-[10px] font-bold px-2 py-1 rounded-lg bg-indigo-600 text-white">AM</button>
+            <button id="modalBtnPM" type="button" class="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">PM</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Dial Area -->
+      <div class="p-6 flex flex-col items-center justify-center bg-white dark:bg-slate-900">
+        <div 
+          id="modalClockDial" 
+          class="relative w-[240px] h-[240px] rounded-full bg-slate-50 dark:bg-slate-800/70 border-4 border-slate-150 dark:border-slate-800 shadow-inner flex items-center justify-center no-select cursor-pointer touch-none"
+        >
+          <div class="absolute z-30 w-3 h-3 rounded-full bg-indigo-600 ring-2 ring-white dark:ring-slate-900 pointer-events-none"></div>
+          <svg class="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 240 240">
+            <g id="modalHandGroup" class="hand-transition" transform="rotate(300, 120, 120)">
+              <line id="modalHandLine" x1="120" y1="120" x2="120" y2="38" stroke="currentColor" stroke-width="2" class="text-indigo-600 dark:text-indigo-500" />
+              <circle id="modalHandBubble" cx="120" cy="38" r="16" class="fill-indigo-600 dark:fill-indigo-500 shadow-lg" />
+              <circle id="modalHandDot" cx="120" cy="38" r="3" class="fill-white hidden" />
+            </g>
+          </svg>
+          <div id="modalDialNumbers" class="absolute inset-0 z-20 pointer-events-none dial-fade-enter"></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
+        <button id="modalCancelBtn" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition">
+          Batal
+        </button>
+        <button id="modalApplyBtn" type="button" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition">
+          Terapkan
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium shadow-2xl opacity-0 translate-y-3 pointer-events-none transition-all duration-200">
+    <svg class="w-4 h-4 text-emerald-400 dark:text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+    <span id="toastMessage">Waktu disalin ke clipboard!</span>
+  </div>
+
+  <!-- JavaScript Implementation -->
+  <script>
+    /**
+     * STATE MANAGEMENT FOR ANALOG CLOCK PICKER
+     */
+    const state = {
+      hours: 10,       // 1-12 in 12h, or 0-23 in 24h
+      minutes: 30,     // 0-59
+      period: 'AM',    // 'AM' | 'PM'
+      mode: 'hours',   // 'hours' | 'minutes'
+      mainView: 'analog', // 'analog' | 'list'
+      format24: false, // true for 24h format, false for 12h AM/PM
+      soundEnabled: true,
+      autoAdvance: true,
+      isDragging: false
+    };
+
+    // Modal specific state
+    const modalState = {
+      hours: 10,
+      minutes: 30,
+      period: 'AM',
+      mode: 'hours',
+      format24: false,
+      isDragging: false
+    };
+
+    /**
+     * WEB AUDIO API FOR TACTILE MECHANICAL TICK + HAPTICS
+     */
+    let audioCtx = null;
+    function playTick() {
+      // Haptic feedback for touch devices
+      if (navigator.vibrate) {
+        try { navigator.vibrate(6); } catch (_) {}
+      }
+
+      if (!state.soundEnabled) return;
+      try {
+        if (!audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) audioCtx = new AudioContext();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (!audioCtx) return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.018);
+        
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.018);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.018);
+      } catch (err) {
+        // Silently ignore audio context block
+      }
+    }
+
+    /**
+     * INDONESIAN TIME IN WORDS
+     */
+    const angkaIndo = ['nol', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas', 'dua belas'];
+    function getIndonesianTimeWord(h, m, period, is24) {
+      let hourNum = h;
+      if (is24) {
+        // convert to 12h for descriptive words
+        if (hourNum === 0) hourNum = 12;
+        else if (hourNum > 12) hourNum -= 12;
+      }
+      const hourWord = angkaIndo[hourNum] || hourNum;
+      
+      let waktuHari = 'pagi';
+      if (!is24) {
+        if (period === 'AM') {
+          waktuHari = (h >= 11) ? 'siang' : 'pagi';
+        } else {
+          if (h === 12 || h < 3) waktuHari = 'siang';
+          else if (h >= 3 && h < 6) waktuHari = 'sore';
+          else waktuHari = 'malam';
+        }
+      } else {
+        if (h >= 4 && h < 11) waktuHari = 'pagi';
+        else if (h >= 11 && h < 15) waktuHari = 'siang';
+        else if (h >= 15 && h < 18) waktuHari = 'sore';
+        else waktuHari = 'malam';
+      }
+
+      let minuteWord = '';
+      if (m === 0) {
+        minuteWord = 'tepat';
+      } else if (m === 15) {
+        minuteWord = 'lewat seperempat';
+      } else if (m === 30) {
+        minuteWord = 'setengah ' + (angkaIndo[(hourNum % 12) + 1] || ((hourNum % 12) + 1));
+        return `Pukul ${minuteWord} ${waktuHari}`;
+      } else if (m === 45) {
+        minuteWord = 'kurang seperempat menuju pukul ' + (angkaIndo[(hourNum % 12) + 1] || ((hourNum % 12) + 1));
+        return `${minuteWord} ${waktuHari}`;
+      } else {
+        minuteWord = `lewat ${m} menit`;
+      }
+
+      return `Pukul ${hourWord} ${minuteWord} ${waktuHari}`;
+    }
+
+    /**
+     * TOAST NOTIFICATION HELPER
+     */
+    let toastTimeout = null;
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMessage');
+      toastMsg.textContent = message;
+      toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+      }, 2500);
+    }
+
+    /**
+     * RENDER DIAL NUMBERS
+     */
+    function renderDialNumbers(containerEl, mode, format24, selectedValue, size = 280) {
+      containerEl.innerHTML = '';
+      const center = size / 2;
+
+      if (mode === 'hours') {
+        if (format24) {
+          // 24-Hour mode: Outer Ring (1-12), Inner Ring (13-23, 00)
+          const outerRadius = (size / 2) * 0.74;
+          const innerRadius = (size / 2) * 0.48;
+
+          // Outer ring 1-12
+          for (let i = 1; i <= 12; i++) {
+            const angle = (i * 30 - 90) * (Math.PI / 180);
+            const x = center + outerRadius * Math.cos(angle);
+            const y = center + outerRadius * Math.sin(angle);
+            
+            const numEl = document.createElement('div');
+            numEl.className = `absolute flex items-center justify-center font-mono-num font-bold text-xs transform -translate-x-1/2 -translate-y-1/2 transition-colors duration-150 ${
+              selectedValue === i ? 'text-white font-extrabold z-20' : 'text-slate-700 dark:text-slate-300'
+            }`;
+            numEl.style.left = `${(x / size) * 100}%`;
+            numEl.style.top = `${(y / size) * 100}%`;
+            numEl.textContent = i;
+            containerEl.appendChild(numEl);
+          }
+
+          // Inner ring 13-23, 00
+          for (let i = 13; i <= 24; i++) {
+            const val = i === 24 ? 0 : i;
+            const step = i - 12;
+            const angle = (step * 30 - 90) * (Math.PI / 180);
+            const x = center + innerRadius * Math.cos(angle);
+            const y = center + innerRadius * Math.sin(angle);
+
+            const numEl = document.createElement('div');
+            numEl.className = `absolute flex items-center justify-center font-mono-num font-semibold text-[10px] transform -translate-x-1/2 -translate-y-1/2 transition-colors duration-150 ${
+              selectedValue === val ? 'text-white font-extrabold z-20' : 'text-slate-400 dark:text-slate-500'
+            }`;
+            numEl.style.left = `${(x / size) * 100}%`;
+            numEl.style.top = `${(y / size) * 100}%`;
+            numEl.textContent = val === 0 ? '00' : val;
+            containerEl.appendChild(numEl);
+          }
+
+        } else {
+          // 12-Hour mode
+          const radius = (size / 2) * 0.70;
+          for (let i = 1; i <= 12; i++) {
+            const angle = (i * 30 - 90) * (Math.PI / 180);
+            const x = center + radius * Math.cos(angle);
+            const y = center + radius * Math.sin(angle);
+
+            const numEl = document.createElement('div');
+            numEl.className = `absolute flex items-center justify-center font-mono-num font-bold text-sm transform -translate-x-1/2 -translate-y-1/2 transition-colors duration-150 ${
+              selectedValue === i ? 'text-white font-extrabold z-20' : 'text-slate-700 dark:text-slate-300'
+            }`;
+            numEl.style.left = `${(x / size) * 100}%`;
+            numEl.style.top = `${(y / size) * 100}%`;
+            numEl.textContent = i;
+            containerEl.appendChild(numEl);
+          }
+        }
+
+      } else {
+        // Minutes mode (00, 05, 10, ... 55)
+        const radius = (size / 2) * 0.70;
+        
+        // Minor minute tick dots (subtle)
+        for (let m = 0; m < 60; m++) {
+          if (m % 5 !== 0) {
+            const angle = (m * 6 - 90) * (Math.PI / 180);
+            const x = center + radius * Math.cos(angle);
+            const y = center + radius * Math.sin(angle);
+
+            const dotEl = document.createElement('div');
+            dotEl.className = 'absolute w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700 transform -translate-x-1/2 -translate-y-1/2';
+            dotEl.style.left = `${(x / size) * 100}%`;
+            dotEl.style.top = `${(y / size) * 100}%`;
+            containerEl.appendChild(dotEl);
+          }
+        }
+
+        // Major numbers every 5 mins
+        for (let i = 0; i < 60; i += 5) {
+          const angle = (i * 6 - 90) * (Math.PI / 180);
+          const x = center + radius * Math.cos(angle);
+          const y = center + radius * Math.sin(angle);
+
+          const numEl = document.createElement('div');
+          numEl.className = `absolute flex items-center justify-center font-mono-num font-bold text-xs transform -translate-x-1/2 -translate-y-1/2 transition-colors duration-150 ${
+            selectedValue === i ? 'text-white font-extrabold z-20' : 'text-slate-700 dark:text-slate-300'
+          }`;
+          numEl.style.left = `${(x / size) * 100}%`;
+          numEl.style.top = `${(y / size) * 100}%`;
+          numEl.textContent = i.toString().padStart(2, '0');
+          containerEl.appendChild(numEl);
+        }
+      }
+    }
+
+    /**
+     * CLOCK HAND ROTATION ANIMATION ENGINE
+     */
+    let mainAnimId = null;
+    let presetSequenceTimer = null;
+    let isPresetAnimating = false;
+    let currentDialAngle = 300; // 10:00 initial (10 * 30 = 300 deg)
+    let currentDialLength = 98; // default length
+
+    function cancelHandAnimation() {
+      if (mainAnimId) {
+        cancelAnimationFrame(mainAnimId);
+        mainAnimId = null;
+      }
+    }
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    /**
+     * Smoothly rotates the SVG needle to a target angle and length using requestAnimationFrame.
+     * When clockwiseOnly is true, the needle always sweeps forward (clockwise) in time.
+     */
+    function animateHandTo(targetAngle, targetLength = 98, duration = null, clockwiseOnly = true, onComplete = null) {
+      cancelHandAnimation();
+
+      const handGroup = document.getElementById('handGroup');
+      const handLine = document.getElementById('handLine');
+      const handBubble = document.getElementById('handBubble');
+      const handDot = document.getElementById('handDot');
+      if (!handGroup || !handLine) {
+        if (onComplete) onComplete();
+        return;
+      }
+
+      handGroup.classList.remove('hand-transition');
+
+      const startNorm = ((currentDialAngle % 360) + 360) % 360;
+      const targetNorm = ((targetAngle % 360) + 360) % 360;
+
+      let delta;
+      if (clockwiseOnly) {
+        delta = targetNorm - startNorm;
+        if (targetNorm === startNorm) {
+          delta = 0;
+        } else if (delta < 0) {
+          delta += 360;
+        }
+      } else {
+        // Shortest angular path (for direct dial taps)
+        delta = (targetNorm - startNorm + 540) % 360 - 180;
+      }
+
+      const startLen = currentDialLength;
+      const deltaLen = targetLength - startLen;
+
+      if (delta === 0 && deltaLen === 0) {
+        currentDialAngle = targetNorm;
+        currentDialLength = targetLength;
+        const finalY = 140 - targetLength;
+        handLine.setAttribute('y2', finalY);
+        handBubble.setAttribute('cy', finalY);
+        handDot.setAttribute('cy', finalY);
+        handGroup.setAttribute('transform', `rotate(${targetNorm}, 140, 140)`);
+        if (onComplete) onComplete();
+        return;
+      }
+
+      // Step interval for mechanical audio tick
+      const step = (Math.abs(delta) < 30) ? 6 : 30;
+      let lastTickStep = Math.floor(startNorm / step);
+
+      const animDuration = duration !== null 
+        ? duration 
+        : Math.max(260, Math.min(460, (Math.abs(delta) / 360) * 400 + 200));
+
+      const startTime = performance.now();
+
+      function frame(now) {
+        const elapsed = now - startTime;
+        const rawProgress = Math.min(1, elapsed / animDuration);
+        const progress = easeOutCubic(rawProgress);
+
+        const curAngle = startNorm + delta * progress;
+        const curLen = startLen + deltaLen * progress;
+        const curY = 140 - curLen;
+
+        const normAngle = ((curAngle % 360) + 360) % 360;
+        handGroup.setAttribute('transform', `rotate(${normAngle}, 140, 140)`);
+        handLine.setAttribute('y2', curY);
+        handBubble.setAttribute('cy', curY);
+        handDot.setAttribute('cy', curY);
+        currentDialAngle = normAngle;
+        currentDialLength = curLen;
+
+        // Mechanical audio feedback when crossing dial numbers
+        const currentStep = Math.floor(curAngle / step);
+        if (currentStep !== lastTickStep) {
+          playTick();
+          lastTickStep = currentStep;
+        }
+
+        if (rawProgress < 1) {
+          mainAnimId = requestAnimationFrame(frame);
+        } else {
+          mainAnimId = null;
+          currentDialAngle = targetNorm;
+          currentDialLength = targetLength;
+          const finalY = 140 - targetLength;
+          handLine.setAttribute('y2', finalY);
+          handBubble.setAttribute('cy', finalY);
+          handDot.setAttribute('cy', finalY);
+          handGroup.setAttribute('transform', `rotate(${targetNorm}, 140, 140)`);
+          if (onComplete) onComplete();
+        }
+      }
+
+      mainAnimId = requestAnimationFrame(frame);
+    }
+
+    /**
+     * UPDATE MAIN CLOCK UI
+     */
+    function updateMainClockUI(animate = true, skipHandTransform = false) {
+      const hourBtn = document.getElementById('hourDisplayBtn');
+      const minBtn = document.getElementById('minuteDisplayBtn');
+      const tabHour = document.getElementById('tabHour');
+      const tabMin = document.getElementById('tabMinute');
+      const btnAM = document.getElementById('btnAM');
+      const btnPM = document.getElementById('btnPM');
+      const ampmBox = document.getElementById('ampmContainer');
+      const handGroup = document.getElementById('handGroup');
+      const handLine = document.getElementById('handLine');
+      const handBubble = document.getElementById('handBubble');
+      const handDot = document.getElementById('handDot');
+      const dialNumbers = document.getElementById('dialNumbersContainer');
+      const instructionText = document.getElementById('dialInstructionText');
+
+      // Update Hand Transition class when not animating with rAF
+      if (!skipHandTransform) {
+        if (animate && !state.isDragging) {
+          handGroup.classList.add('hand-transition');
+        } else {
+          handGroup.classList.remove('hand-transition');
+        }
+      }
+
+      // Display Digits
+      const formattedHour = state.format24
+        ? state.hours.toString().padStart(2, '0')
+        : state.hours.toString().padStart(2, '0');
+      const formattedMin = state.minutes.toString().padStart(2, '0');
+
+      hourBtn.textContent = formattedHour;
+      minBtn.textContent = formattedMin;
+
+      // AM / PM Visibility & Active States
+      if (state.format24) {
+        ampmBox.classList.add('hidden');
+      } else {
+        ampmBox.classList.remove('hidden');
+        if (state.period === 'AM') {
+          btnAM.className = 'text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer bg-indigo-600 text-white shadow-sm';
+          btnPM.className = 'text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700';
+        } else {
+          btnPM.className = 'text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer bg-indigo-600 text-white shadow-sm';
+          btnAM.className = 'text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700';
+        }
+      }
+
+      // Active Mode Styling for Digits & Tabs
+      if (state.mode === 'hours') {
+        hourBtn.className = 'text-5xl sm:text-6xl font-bold font-mono-num px-4 py-2 rounded-2xl transition-all duration-200 cursor-pointer bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-105 ring-2 ring-indigo-500/20';
+        minBtn.className = 'text-5xl sm:text-6xl font-bold font-mono-num px-4 py-2 rounded-2xl transition-all duration-200 cursor-pointer bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700';
+
+        tabHour.className = 'px-5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm';
+        tabMin.className = 'px-5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
+
+        instructionText.innerHTML = `
+          <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Klik atau geser ke angka jam (${state.format24 ? '00-23' : '1-12'})
+        `;
+      } else {
+        minBtn.className = 'text-5xl sm:text-6xl font-bold font-mono-num px-4 py-2 rounded-2xl transition-all duration-200 cursor-pointer bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-105 ring-2 ring-indigo-500/20';
+        hourBtn.className = 'text-5xl sm:text-6xl font-bold font-mono-num px-4 py-2 rounded-2xl transition-all duration-200 cursor-pointer bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700';
+
+        tabMin.className = 'px-5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm';
+        tabHour.className = 'px-5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
+
+        instructionText.innerHTML = `
+          <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
+          </svg>
+          Klik atau geser ke angka menit (00-59)
+        `;
+      }
+
+      // Calculate Hand Length and Angle
+      let angle = 0;
+      let handLength = 98; // default length
+      let isBetween5Mins = false;
+
+      if (state.mode === 'hours') {
+        if (state.format24) {
+          if (state.hours === 0 || state.hours >= 13) {
+            // Inner ring
+            handLength = 68;
+            angle = (state.hours % 12) * 30;
+          } else {
+            // Outer ring
+            handLength = 104;
+            angle = (state.hours % 12) * 30;
+          }
+        } else {
+          handLength = 98;
+          angle = (state.hours % 12) * 30;
+        }
+      } else {
+        // Minutes
+        handLength = 98;
+        angle = state.minutes * 6;
+        if (state.minutes % 5 !== 0) {
+          isBetween5Mins = true;
+        }
+      }
+
+      // Update SVG needle if not skipped
+      if (!skipHandTransform) {
+        const targetY = 140 - handLength;
+        handLine.setAttribute('y2', targetY);
+        handBubble.setAttribute('cy', targetY);
+        handDot.setAttribute('cy', targetY);
+        handGroup.setAttribute('transform', `rotate(${angle}, 140, 140)`);
+        currentDialAngle = angle;
+        currentDialLength = handLength;
+
+        if (isBetween5Mins) {
+          handDot.classList.remove('hidden');
+        } else {
+          handDot.classList.add('hidden');
+        }
+      }
+
+      // Render dial numbers
+      const selectedVal = state.mode === 'hours' ? state.hours : state.minutes;
+      renderDialNumbers(dialNumbers, state.mode, state.format24, selectedVal, 280);
+
+      // Populate main card list columns (for dropdown list mode)
+      const mainColH = document.getElementById('mainColHours');
+      const mainColM = document.getElementById('mainColMinutes');
+      const mainColP = document.getElementById('mainColPeriod');
+      if (mainColH && mainColM && mainColP && typeof populateListColumns === 'function') {
+        populateListColumns(
+          mainColH, mainColM, mainColP,
+          state.hours, state.minutes, state.period, state.format24,
+          (newH) => { state.hours = newH; updateMainClockUI(true); playTick(); },
+          (newM) => { state.minutes = newM; updateMainClockUI(true); playTick(); },
+          (newP) => { state.period = newP; updateMainClockUI(true); playTick(); }
+        );
+      }
+
+      // Sync Native Select Dropdowns
+      if (window.syncNativeSelectValues) {
+        window.syncNativeSelectValues();
+      }
+
+      // Update Summary & Form elements
+      updateSummaryDisplays();
+    }
+
+    /**
+     * UPDATE SUMMARY & RIGHT COLUMN DISPLAYS
+     */
+    function updateSummaryDisplays() {
+      const summaryTime = document.getElementById('summaryTimeLarge');
+      const summaryPeriod = document.getElementById('summaryPeriodLarge');
+      const summaryTime24 = document.getElementById('summaryTime24');
+      const summaryIndo = document.getElementById('summaryTextIndo');
+      const meta12h = document.getElementById('meta12h');
+      const meta24h = document.getElementById('meta24h');
+      const formInput = document.getElementById('formScheduleTime');
+      const formDropdownInput = document.getElementById('formDropdownTime');
+
+      // Compute 12h and 24h strings
+      let h24, h12, period12;
+      if (state.format24) {
+        h24 = state.hours;
+        period12 = h24 >= 12 ? 'PM' : 'AM';
+        h12 = h24 % 12;
+        if (h12 === 0) h12 = 12;
+      } else {
+        period12 = state.period;
+        h12 = state.hours;
+        if (period12 === 'AM') {
+          h24 = h12 === 12 ? 0 : h12;
+        } else {
+          h24 = h12 === 12 ? 12 : h12 + 12;
+        }
+      }
+
+      const str12 = `${h12.toString().padStart(2, '0')}:${state.minutes.toString().padStart(2, '0')} ${period12}`;
+      const str24 = `${h24.toString().padStart(2, '0')}:${state.minutes.toString().padStart(2, '0')}`;
+
+      if (state.format24) {
+        summaryTime.textContent = str24;
+        summaryPeriod.textContent = '';
+        summaryTime24.textContent = `(${str12})`;
+      } else {
+        summaryTime.textContent = `${h12.toString().padStart(2, '0')}:${state.minutes.toString().padStart(2, '0')}`;
+        summaryPeriod.textContent = period12;
+        summaryTime24.textContent = `(${str24} WIB)`;
+      }
+
+      meta12h.textContent = str12;
+      meta24h.textContent = str24;
+      summaryIndo.textContent = getIndonesianTimeWord(state.hours, state.minutes, state.period, state.format24);
+
+      if (formInput) {
+        formInput.value = state.format24 ? str24 : str12;
+      }
+      if (formDropdownInput) {
+        formDropdownInput.value = state.format24 ? str24 : str12;
+      }
+    }
+
+    /**
+     * TRANSITION BETWEEN HOUR AND MINUTE MODES
+     */
+    function transitionToMode(newMode) {
+      if (state.mode === newMode) return;
+      cancelHandAnimation();
+      state.mode = newMode;
+
+      if (newMode === 'minutes') {
+        const targetAngle = state.minutes * 6;
+        const targetLen = 98;
+        updateMainClockUI(false, true); // update mode headers/dial numbers, skip needle transform
+        animateHandTo(targetAngle, targetLen, 280, true, () => {
+          updateMainClockUI(false, false);
+        });
+      } else {
+        let targetAngle = (state.hours % 12) * 30;
+        let targetLen = 98;
+        if (state.format24) {
+          targetLen = (state.hours === 0 || state.hours >= 13) ? 68 : 104;
+        }
+        updateMainClockUI(false, true); // update mode headers/dial numbers, skip needle transform
+        animateHandTo(targetAngle, targetLen, 280, true, () => {
+          updateMainClockUI(false, false);
+        });
+      }
+    }
+
+    /**
+     * ANIMATE PRESET (TWO-PHASE ROTATIONAL SWEEP)
+     * Phase 1: Needle rotates smoothly clockwise to preset hour
+     * Phase 2: Switches to minutes mode and needle rotates smoothly clockwise to preset minute
+     */
+    function animatePreset(targetHour, targetMinute, targetPeriod, customToastMsg = null) {
+      cancelHandAnimation();
+      if (presetSequenceTimer) {
+        clearTimeout(presetSequenceTimer);
+        presetSequenceTimer = null;
+      }
+
+      // If user is currently in list view on the main card, switch to analog to view the animation
+      if (state.mainView !== 'analog') {
+        state.mainView = 'analog';
+        const analogBox = document.getElementById('mainAnalogContainer');
+        const listBox = document.getElementById('mainListContainer');
+        const toggleLabel = document.getElementById('mainViewToggleLabel');
+        if (analogBox && listBox) {
+          analogBox.classList.remove('hidden');
+          listBox.classList.add('hidden');
+          if (toggleLabel) toggleLabel.textContent = 'List';
+        }
+      }
+
+      // Sync period
+      if (!state.format24) {
+        state.period = targetPeriod;
+      }
+
+      // Calculate target hour parameters
+      let targetH = targetHour;
+      let targetHAngle = 0;
+      let targetHLen = 98;
+      if (state.format24) {
+        targetHAngle = (targetH % 12) * 30;
+        targetHLen = (targetH === 0 || targetH >= 13) ? 68 : 104;
+      } else {
+        targetHAngle = (targetH % 12) * 30;
+        targetHLen = 98;
+      }
+
+      // Target minute parameters
+      let targetM = targetMinute;
+      let targetMAngle = targetM * 6;
+      let targetMLen = 98;
+
+      isPresetAnimating = true;
+
+      // PHASE 1: Hour rotation
+      state.mode = 'hours';
+      updateMainClockUI(false, true); // Render hour headers and dial numbers, needle stays in motion
+
+      // Smoothly rotate hour hand clockwise to targetHAngle
+      animateHandTo(targetHAngle, targetHLen, 360, true, () => {
+        state.hours = targetH;
+        updateSummaryDisplays();
+        if (window.syncNativeSelectValues) window.syncNativeSelectValues();
+
+        // Brief natural mechanical pause (140ms), then Phase 2
+        presetSequenceTimer = setTimeout(() => {
+          // PHASE 2: Minute rotation
+          state.mode = 'minutes';
+          updateMainClockUI(false, true); // Render minute numbers with fade, needle stays in motion
+
+          // Smoothly rotate minute hand clockwise to targetMAngle
+          animateHandTo(targetMAngle, targetMLen, 360, true, () => {
+            state.minutes = targetM;
+            isPresetAnimating = false;
+            updateMainClockUI(false, false); // Final clean sync
+            if (customToastMsg) {
+              showToast(customToastMsg);
+            }
+          });
+        }, 140);
+      });
+    }
+
+    /**
+     * POINTER & DIAL INTERACTION (CLICK & DRAG)
+     */
+    function setupDialInteraction() {
+      const dial = document.getElementById('clockDial');
+      let autoAdvanceTimer = null;
+      let isPointerDown = false;
+      let hasDragged = false;
+      let startX = 0;
+      let startY = 0;
+
+      function getDialCoords(e) {
+        const rect = dial.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (280 / rect.width);
+        const y = (e.clientY - rect.top) * (280 / rect.height);
+        const dx = x - 140;
+        const dy = y - 140;
+        const dist = Math.hypot(dx, dy);
+        let angleDeg = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+        if (angleDeg < 0) angleDeg += 360;
+        return { dist, angleDeg };
+      }
+
+      function handleDragMove(e) {
+        const { dist, angleDeg } = getDialCoords(e);
+        if (dist < 18) return;
+
+        let changed = false;
+        if (state.mode === 'hours') {
+          if (state.format24) {
+            const isInner = dist < 85;
+            let step = Math.round(angleDeg / 30) % 12;
+            let newHour = isInner ? (step === 0 ? 0 : step + 12) : (step === 0 ? 12 : step);
+            if (newHour !== state.hours) {
+              state.hours = newHour;
+              changed = true;
+            }
+          } else {
+            let step = Math.round(angleDeg / 30) % 12;
+            let newHour = step === 0 ? 12 : step;
+            if (newHour !== state.hours) {
+              state.hours = newHour;
+              changed = true;
+            }
+          }
+        } else {
+          let newMin = Math.round(angleDeg / 6) % 60;
+          if (newMin !== state.minutes) {
+            state.minutes = newMin;
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          playTick();
+          updateMainClockUI(false, false);
+        }
+      }
+
+      function handleDialTap(e) {
+        const { dist, angleDeg } = getDialCoords(e);
+        if (dist < 18) return;
+
+        if (state.mode === 'hours') {
+          let targetAngle = 0;
+          let targetLen = 98;
+          let newHour = 12;
+
+          if (state.format24) {
+            const isInner = dist < 85;
+            let step = Math.round(angleDeg / 30) % 12;
+            newHour = isInner ? (step === 0 ? 0 : step + 12) : (step === 0 ? 12 : step);
+            targetAngle = (newHour % 12) * 30;
+            targetLen = isInner ? 68 : 104;
+          } else {
+            let step = Math.round(angleDeg / 30) % 12;
+            newHour = step === 0 ? 12 : step;
+            targetAngle = (newHour % 12) * 30;
+            targetLen = 98;
+          }
+
+          animateHandTo(targetAngle, targetLen, 240, false, () => {
+            state.hours = newHour;
+            updateMainClockUI(false, false);
+            playTick();
+
+            if (state.autoAdvance) {
+              clearTimeout(autoAdvanceTimer);
+              autoAdvanceTimer = setTimeout(() => {
+                transitionToMode('minutes');
+              }, 280);
+            }
+          });
+
+        } else {
+          // Minutes
+          let newMin = Math.round(angleDeg / 6) % 60;
+          let targetAngle = newMin * 6;
+          let targetLen = 98;
+
+          animateHandTo(targetAngle, targetLen, 220, false, () => {
+            state.minutes = newMin;
+            updateMainClockUI(false, false);
+            playTick();
+          });
+        }
+      }
+
+      dial.addEventListener('pointerdown', (e) => {
+        isPointerDown = true;
+        hasDragged = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        cancelHandAnimation();
+        clearTimeout(autoAdvanceTimer);
+        dial.setPointerCapture(e.pointerId);
+      });
+
+      dial.addEventListener('pointermove', (e) => {
+        if (!isPointerDown) return;
+        const moveDist = Math.hypot(e.clientX - startX, e.clientY - startY);
+        if (!hasDragged && moveDist > 6) {
+          hasDragged = true;
+          state.isDragging = true;
+        }
+        if (hasDragged) {
+          handleDragMove(e);
+        }
+      });
+
+      function onPointerEnd(e) {
+        if (!isPointerDown) return;
+        isPointerDown = false;
+        try { dial.releasePointerCapture(e.pointerId); } catch (_) {}
+
+        if (hasDragged) {
+          state.isDragging = false;
+          updateMainClockUI(false, false);
+
+          if (state.mode === 'hours' && state.autoAdvance) {
+            clearTimeout(autoAdvanceTimer);
+            autoAdvanceTimer = setTimeout(() => {
+              transitionToMode('minutes');
+            }, 300);
+          }
+        } else {
+          // Tap / Click on dial
+          handleDialTap(e);
+        }
+      }
+
+      dial.addEventListener('pointerup', onPointerEnd);
+      dial.addEventListener('pointercancel', onPointerEnd);
+
+      // Keyboard Accessibility (Arrow keys to change value)
+      dial.addEventListener('keydown', (e) => {
+        let changed = false;
+        if (state.mode === 'hours') {
+          if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+            state.hours = state.format24 ? (state.hours + 1) % 24 : (state.hours % 12) + 1;
+            changed = true;
+          } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+            if (state.format24) {
+              state.hours = (state.hours - 1 + 24) % 24;
+            } else {
+              state.hours = state.hours === 1 ? 12 : state.hours - 1;
+            }
+            changed = true;
+          }
+        } else {
+          if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+            state.minutes = (state.minutes + 1) % 60;
+            changed = true;
+          } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+            state.minutes = (state.minutes - 1 + 60) % 60;
+            changed = true;
+          }
+        }
+        if (changed) {
+          e.preventDefault();
+          playTick();
+          updateMainClockUI(true);
+        }
+      });
+    }
+
+    /**
+     * MODAL DIALOG CLOCK PICKER SETUP
+     */
+    function setupModalClock() {
+      const modal = document.getElementById('clockModal');
+      const dialogCard = document.getElementById('modalDialogCard');
+      const openBtn = document.getElementById('openModalBtn');
+      const inputEl = document.getElementById('formScheduleTime');
+      const closeX = document.getElementById('modalCloseX');
+      const cancelBtn = document.getElementById('modalCancelBtn');
+      const applyBtn = document.getElementById('modalApplyBtn');
+      const modalDial = document.getElementById('modalClockDial');
+
+      const modalHourBtn = document.getElementById('modalHourBtn');
+      const modalMinBtn = document.getElementById('modalMinuteBtn');
+      const modalBtnAM = document.getElementById('modalBtnAM');
+      const modalBtnPM = document.getElementById('modalBtnPM');
+      const modalHandGroup = document.getElementById('modalHandGroup');
+      const modalHandLine = document.getElementById('modalHandLine');
+      const modalHandBubble = document.getElementById('modalHandBubble');
+      const modalHandDot = document.getElementById('modalHandDot');
+      const modalDialNumbers = document.getElementById('modalDialNumbers');
+
+      function openModal() {
+        // Sync modal state with main state
+        modalState.hours = state.hours;
+        modalState.minutes = state.minutes;
+        modalState.period = state.period;
+        modalState.format24 = state.format24;
+        modalState.mode = 'hours';
+
+        updateModalUI(false);
+
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.classList.add('opacity-100');
+        dialogCard.classList.remove('scale-95');
+        dialogCard.classList.add('scale-100');
+      }
+
+      function closeModal() {
+        modal.classList.remove('opacity-100');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        dialogCard.classList.remove('scale-100');
+        dialogCard.classList.add('scale-95');
+      }
+
+      function updateModalUI(animate = true) {
+        if (animate && !modalState.isDragging) {
+          modalHandGroup.classList.add('hand-transition');
+        } else {
+          modalHandGroup.classList.remove('hand-transition');
+        }
+
+        modalHourBtn.textContent = modalState.hours.toString().padStart(2, '0');
+        modalMinBtn.textContent = modalState.minutes.toString().padStart(2, '0');
+
+        if (modalState.mode === 'hours') {
+          modalHourBtn.className = 'text-4xl font-bold font-mono-num px-3 py-1.5 rounded-xl bg-indigo-600 text-white shadow-md';
+          modalMinBtn.className = 'text-4xl font-bold font-mono-num px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
+        } else {
+          modalMinBtn.className = 'text-4xl font-bold font-mono-num px-3 py-1.5 rounded-xl bg-indigo-600 text-white shadow-md';
+          modalHourBtn.className = 'text-4xl font-bold font-mono-num px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
+        }
+
+        const modalAmPm = document.getElementById('modalAmPmContainer');
+        if (modalState.format24) {
+          modalAmPm.classList.add('hidden');
+        } else {
+          modalAmPm.classList.remove('hidden');
+          if (modalState.period === 'AM') {
+            modalBtnAM.className = 'text-[10px] font-bold px-2 py-1 rounded-lg bg-indigo-600 text-white';
+            modalBtnPM.className = 'text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
+          } else {
+            modalBtnPM.className = 'text-[10px] font-bold px-2 py-1 rounded-lg bg-indigo-600 text-white';
+            modalBtnAM.className = 'text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
+          }
+        }
+
+        // SVG needle for 240x240
+        let angle = 0;
+        let handLen = 82;
+        let isBetween5 = false;
+
+        if (modalState.mode === 'hours') {
+          if (modalState.format24) {
+            if (modalState.hours === 0 || modalState.hours >= 13) {
+              handLen = 58;
+              angle = (modalState.hours % 12) * 30;
+            } else {
+              handLen = 88;
+              angle = (modalState.hours % 12) * 30;
+            }
+          } else {
+            handLen = 82;
+            angle = (modalState.hours % 12) * 30;
+          }
+        } else {
+          handLen = 82;
+          angle = modalState.minutes * 6;
+          if (modalState.minutes % 5 !== 0) isBetween5 = true;
+        }
+
+        const targetY = 120 - handLen;
+        modalHandLine.setAttribute('y2', targetY);
+        modalHandBubble.setAttribute('cy', targetY);
+        modalHandDot.setAttribute('cy', targetY);
+        modalHandGroup.setAttribute('transform', `rotate(${angle}, 120, 120)`);
+
+        if (isBetween5) modalHandDot.classList.remove('hidden');
+        else modalHandDot.classList.add('hidden');
+
+        const val = modalState.mode === 'hours' ? modalState.hours : modalState.minutes;
+        renderDialNumbers(modalDialNumbers, modalState.mode, modalState.format24, val, 240);
+      }
+
+      // Modal dial pointer event
+      let modalAutoTimer = null;
+      function handleModalPointer(e) {
+        const rect = modalDial.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (240 / rect.width);
+        const y = (e.clientY - rect.top) * (240 / rect.height);
+        const dx = x - 120;
+        const dy = y - 120;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 15) return;
+
+        let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+        if (angle < 0) angle += 360;
+
+        let changed = false;
+        if (modalState.mode === 'hours') {
+          let step = Math.round(angle / 30) % 12;
+          let newH;
+          if (modalState.format24) {
+            const isInner = dist < 72;
+            if (isInner) {
+              newH = step === 0 ? 0 : step + 12;
+            } else {
+              newH = step === 0 ? 12 : step;
+            }
+          } else {
+            newH = step === 0 ? 12 : step;
+          }
+          if (newH !== modalState.hours) {
+            modalState.hours = newH;
+            changed = true;
+          }
+        } else {
+          let newM = Math.round(angle / 6) % 60;
+          if (newM !== modalState.minutes) {
+            modalState.minutes = newM;
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          playTick();
+          updateModalUI(!modalState.isDragging);
+        }
+      }
+
+      modalDial.addEventListener('pointerdown', (e) => {
+        modalState.isDragging = true;
+        modalDial.setPointerCapture(e.pointerId);
+        clearTimeout(modalAutoTimer);
+        handleModalPointer(e);
+      });
+
+      modalDial.addEventListener('pointermove', (e) => {
+        if (!modalState.isDragging) return;
+        handleModalPointer(e);
+      });
+
+      function onModalPointerEnd(e) {
+        if (!modalState.isDragging) return;
+        modalState.isDragging = false;
+        try { modalDial.releasePointerCapture(e.pointerId); } catch (_) {}
+        updateModalUI(true);
+
+        if (modalState.mode === 'hours') {
+          clearTimeout(modalAutoTimer);
+          modalAutoTimer = setTimeout(() => {
+            modalState.mode = 'minutes';
+            updateModalUI(true);
+          }, 320);
+        }
+      }
+
+      modalDial.addEventListener('pointerup', onModalPointerEnd);
+      modalDial.addEventListener('pointercancel', onModalPointerEnd);
+
+      // Buttons inside modal
+      modalHourBtn.addEventListener('click', () => {
+        modalState.mode = 'hours';
+        updateModalUI(true);
+      });
+      modalMinBtn.addEventListener('click', () => {
+        modalState.mode = 'minutes';
+        updateModalUI(true);
+      });
+      modalBtnAM.addEventListener('click', () => {
+        modalState.period = 'AM';
+        updateModalUI(true);
+      });
+      modalBtnPM.addEventListener('click', () => {
+        modalState.period = 'PM';
+        updateModalUI(true);
+      });
+
+      openBtn.addEventListener('click', openModal);
+      inputEl.addEventListener('click', openModal);
+      closeX.addEventListener('click', closeModal);
+      cancelBtn.addEventListener('click', closeModal);
+      
+      applyBtn.addEventListener('click', () => {
+        state.hours = modalState.hours;
+        state.minutes = modalState.minutes;
+        state.period = modalState.period;
+        state.mode = modalState.mode;
+        updateMainClockUI(true);
+        closeModal();
+        showToast('Waktu berhasil diterapkan ke form!');
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('pointer-events-none')) {
+          closeModal();
+        }
+      });
+    }
+
+    /**
+     * POPULATE SCROLLABLE LIST COLUMNS (FOR DROPDOWN LIST VIEWS)
+     */
+    function populateListColumns(containerH, containerM, containerP, selectedH, selectedM, selectedP, is24, onSelectH, onSelectM, onSelectP) {
+      if (!containerH || !containerM || !containerP) return;
+
+      // 1. Kolom Jam
+      containerH.innerHTML = '';
+      const startH = is24 ? 0 : 1;
+      const endH = is24 ? 23 : 12;
+      for (let h = startH; h <= endH; h++) {
+        const isSelected = selectedH === h;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `w-full text-center py-1.5 px-1 rounded-lg font-mono-num text-xs font-semibold transition cursor-pointer ${
+          isSelected 
+            ? 'bg-indigo-600 text-white shadow-xs' 
+            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/60'
+        }`;
+        btn.textContent = h.toString().padStart(2, '0');
+        btn.addEventListener('click', () => onSelectH(h));
+        containerH.appendChild(btn);
+        if (isSelected) {
+          setTimeout(() => btn.scrollIntoView({ block: 'nearest' }), 10);
+        }
+      }
+
+      // 2. Kolom Menit (Interval 5 menit, atau bisa pilih kapan saja)
+      containerM.innerHTML = '';
+      for (let m = 0; m < 60; m += 5) {
+        const isSelected = selectedM === m;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `w-full text-center py-1.5 px-1 rounded-lg font-mono-num text-xs font-semibold transition cursor-pointer ${
+          isSelected 
+            ? 'bg-indigo-600 text-white shadow-xs' 
+            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/60'
+        }`;
+        btn.textContent = m.toString().padStart(2, '0');
+        btn.addEventListener('click', () => onSelectM(m));
+        containerM.appendChild(btn);
+        if (isSelected) {
+          setTimeout(() => btn.scrollIntoView({ block: 'nearest' }), 10);
+        }
+      }
+
+      // 3. Kolom Periode (AM / PM)
+      containerP.innerHTML = '';
+      if (!is24) {
+        ['AM', 'PM'].forEach(p => {
+          const isSelected = selectedP === p;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `w-full text-center py-2 px-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+            isSelected 
+              ? 'bg-indigo-600 text-white shadow-xs' 
+              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-700/60'
+          }`;
+          btn.textContent = p;
+          btn.addEventListener('click', () => onSelectP(p));
+          containerP.appendChild(btn);
+        });
+      } else {
+        const info = document.createElement('div');
+        info.className = 'text-[10px] text-slate-400 text-center py-6 font-mono-num leading-tight';
+        info.textContent = '24 Jam';
+        containerP.appendChild(info);
+      }
+    }
+
+    /**
+     * VERSI 1: DROPDOWN POPOVER PICKER SETUP
+     */
+    const ddState = {
+      hours: 10,
+      minutes: 30,
+      period: 'AM',
+      mode: 'hours',
+      viewType: 'analog', // 'analog' | 'list'
+      isOpen: false,
+      isDragging: false
+    };
+
+    function setupDropdownPicker() {
+      const wrapper = document.getElementById('dropdownPickerWrapper');
+      const inputEl = document.getElementById('formDropdownTime');
+      const toggleBtn = document.getElementById('dropdownToggleBtn');
+      const chevron = document.getElementById('dropdownChevron');
+      const popover = document.getElementById('dropdownPopover');
+
+      const ddHourBtn = document.getElementById('ddHourBtn');
+      const ddMinuteBtn = document.getElementById('ddMinuteBtn');
+      const ddBtnAM = document.getElementById('ddBtnAM');
+      const ddBtnPM = document.getElementById('ddBtnPM');
+      const ddAmPmContainer = document.getElementById('ddAmPmContainer');
+
+      const ddViewAnalogBtn = document.getElementById('ddViewAnalogBtn');
+      const ddViewListBtn = document.getElementById('ddViewListBtn');
+      const ddAnalogView = document.getElementById('ddAnalogView');
+      const ddListView = document.getElementById('ddListView');
+      const ddModeText = document.getElementById('ddModeText');
+
+      const ddDial = document.getElementById('ddClockDial');
+      const ddHandGroup = document.getElementById('ddHandGroup');
+      const ddHandLine = document.getElementById('ddHandLine');
+      const ddHandBubble = document.getElementById('ddHandBubble');
+      const ddHandDot = document.getElementById('ddHandDot');
+      const ddDialNumbers = document.getElementById('ddDialNumbers');
+
+      const ddColH = document.getElementById('ddColHours');
+      const ddColM = document.getElementById('ddColMinutes');
+      const ddColP = document.getElementById('ddColPeriod');
+
+      const ddBtnNow = document.getElementById('ddBtnNow');
+      const ddBtnClose = document.getElementById('ddBtnClose');
+      const ddBtnApply = document.getElementById('ddBtnApply');
+
+      function openDropdown() {
+        ddState.hours = state.hours;
+        ddState.minutes = state.minutes;
+        ddState.period = state.period;
+        ddState.mode = 'hours';
+        ddState.isOpen = true;
+
+        popover.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+        updateDropdownUI(false);
+      }
+
+      function closeDropdown() {
+        ddState.isOpen = false;
+        popover.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+      }
+
+      function toggleDropdown() {
+        if (ddState.isOpen) closeDropdown();
+        else openDropdown();
+      }
+
+      function updateDropdownUI(animate = true) {
+        // Update digital display
+        ddHourBtn.textContent = ddState.hours.toString().padStart(2, '0');
+        ddMinuteBtn.textContent = ddState.minutes.toString().padStart(2, '0');
+
+        if (ddState.mode === 'hours') {
+          ddHourBtn.className = 'text-xl px-2.5 py-0.5 rounded-lg bg-indigo-600 text-white shadow-sm cursor-pointer';
+          ddMinuteBtn.className = 'text-xl px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer';
+          if (ddModeText) ddModeText.textContent = state.format24 ? 'Klik/geser angka jam (00-23)' : 'Klik/geser angka jam (1-12)';
+        } else {
+          ddMinuteBtn.className = 'text-xl px-2.5 py-0.5 rounded-lg bg-indigo-600 text-white shadow-sm cursor-pointer';
+          ddHourBtn.className = 'text-xl px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer';
+          if (ddModeText) ddModeText.textContent = 'Klik/geser angka menit (00-59)';
+        }
+
+        if (state.format24) {
+          ddAmPmContainer.classList.add('hidden');
+        } else {
+          ddAmPmContainer.classList.remove('hidden');
+          if (ddState.period === 'AM') {
+            ddBtnAM.className = 'text-[10px] font-bold px-2 py-1 rounded-md bg-indigo-600 text-white cursor-pointer';
+            ddBtnPM.className = 'text-[10px] font-bold px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-pointer';
+          } else {
+            ddBtnPM.className = 'text-[10px] font-bold px-2 py-1 rounded-md bg-indigo-600 text-white cursor-pointer';
+            ddBtnAM.className = 'text-[10px] font-bold px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 cursor-pointer';
+          }
+        }
+
+        // Switch View Modes inside dropdown
+        if (ddState.viewType === 'analog') {
+          ddViewAnalogBtn.className = 'px-2 py-0.5 rounded-md font-semibold bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs cursor-pointer';
+          ddViewListBtn.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer';
+          ddAnalogView.classList.remove('hidden');
+          ddListView.classList.add('hidden');
+
+          // Update 220px Dial needle
+          if (animate && !ddState.isDragging) {
+            ddHandGroup.classList.add('hand-transition');
+          } else {
+            ddHandGroup.classList.remove('hand-transition');
+          }
+
+          let angle = 0;
+          let handLen = 76;
+          let isBetween5 = false;
+
+          if (ddState.mode === 'hours') {
+            if (state.format24) {
+              if (ddState.hours === 0 || ddState.hours >= 13) {
+                handLen = 54;
+                angle = (ddState.hours % 12) * 30;
+              } else {
+                handLen = 82;
+                angle = (ddState.hours % 12) * 30;
+              }
+            } else {
+              handLen = 76;
+              angle = (ddState.hours % 12) * 30;
+            }
+          } else {
+            handLen = 76;
+            angle = ddState.minutes * 6;
+            if (ddState.minutes % 5 !== 0) isBetween5 = true;
+          }
+
+          const targetY = 110 - handLen;
+          ddHandLine.setAttribute('y2', targetY);
+          ddHandBubble.setAttribute('cy', targetY);
+          ddHandDot.setAttribute('cy', targetY);
+          ddHandGroup.setAttribute('transform', `rotate(${angle}, 110, 110)`);
+
+          if (isBetween5) ddHandDot.classList.remove('hidden');
+          else ddHandDot.classList.add('hidden');
+
+          const selectedVal = ddState.mode === 'hours' ? ddState.hours : ddState.minutes;
+          renderDialNumbers(ddDialNumbers, ddState.mode, state.format24, selectedVal, 220);
+
+        } else {
+          // List View Mode
+          ddViewListBtn.className = 'px-2 py-0.5 rounded-md font-semibold bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs cursor-pointer';
+          ddViewAnalogBtn.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer';
+          ddListView.classList.remove('hidden');
+          ddAnalogView.classList.add('hidden');
+
+          populateListColumns(ddColH, ddColM, ddColP, ddState.hours, ddState.minutes, ddState.period, state.format24,
+            (newH) => { ddState.hours = newH; updateDropdownUI(false); syncInputDisplay(); playTick(); },
+            (newM) => { ddState.minutes = newM; updateDropdownUI(false); syncInputDisplay(); playTick(); },
+            (newP) => { ddState.period = newP; updateDropdownUI(false); syncInputDisplay(); playTick(); }
+          );
+        }
+
+        syncInputDisplay();
+      }
+
+      function syncInputDisplay() {
+        let h12 = ddState.hours;
+        let p = ddState.period;
+        let h24 = ddState.hours;
+        if (state.format24) {
+          p = h24 >= 12 ? 'PM' : 'AM';
+          h12 = h24 % 12;
+          if (h12 === 0) h12 = 12;
+        } else {
+          if (p === 'AM') h24 = h12 === 12 ? 0 : h12;
+          else h24 = h12 === 12 ? 12 : h12 + 12;
+        }
+        const str12 = `${h12.toString().padStart(2, '0')}:${ddState.minutes.toString().padStart(2, '0')} ${p}`;
+        const str24 = `${h24.toString().padStart(2, '0')}:${ddState.minutes.toString().padStart(2, '0')}`;
+        inputEl.value = state.format24 ? str24 : str12;
+      }
+
+      // Event Listeners for Dropdown
+      inputEl.addEventListener('click', toggleDropdown);
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown();
+      });
+
+      ddHourBtn.addEventListener('click', () => {
+        ddState.mode = 'hours';
+        updateDropdownUI(true);
+      });
+      ddMinuteBtn.addEventListener('click', () => {
+        ddState.mode = 'minutes';
+        updateDropdownUI(true);
+      });
+      ddBtnAM.addEventListener('click', () => {
+        ddState.period = 'AM';
+        updateDropdownUI(true);
+      });
+      ddBtnPM.addEventListener('click', () => {
+        ddState.period = 'PM';
+        updateDropdownUI(true);
+      });
+
+      ddViewAnalogBtn.addEventListener('click', () => {
+        ddState.viewType = 'analog';
+        updateDropdownUI(true);
+      });
+      ddViewListBtn.addEventListener('click', () => {
+        ddState.viewType = 'list';
+        updateDropdownUI(true);
+      });
+
+      // Pointer event for 220px Dial
+      let ddAutoTimer = null;
+      function handleDDPointers(e) {
+        const rect = ddDial.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (220 / rect.width);
+        const y = (e.clientY - rect.top) * (220 / rect.height);
+        const dx = x - 110;
+        const dy = y - 110;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 14) return;
+
+        let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+        if (angle < 0) angle += 360;
+
+        let changed = false;
+        if (ddState.mode === 'hours') {
+          let step = Math.round(angle / 30) % 12;
+          let newH;
+          if (state.format24) {
+            const isInner = dist < 68;
+            newH = isInner ? (step === 0 ? 0 : step + 12) : (step === 0 ? 12 : step);
+          } else {
+            newH = step === 0 ? 12 : step;
+          }
+          if (newH !== ddState.hours) {
+            ddState.hours = newH;
+            changed = true;
+          }
+        } else {
+          let newM = Math.round(angle / 6) % 60;
+          if (newM !== ddState.minutes) {
+            ddState.minutes = newM;
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          playTick();
+          updateDropdownUI(!ddState.isDragging);
+        }
+      }
+
+      ddDial.addEventListener('pointerdown', (e) => {
+        ddState.isDragging = true;
+        ddDial.setPointerCapture(e.pointerId);
+        clearTimeout(ddAutoTimer);
+        handleDDPointers(e);
+      });
+      ddDial.addEventListener('pointermove', (e) => {
+        if (!ddState.isDragging) return;
+        handleDDPointers(e);
+      });
+      function onDDEnd(e) {
+        if (!ddState.isDragging) return;
+        ddState.isDragging = false;
+        try { ddDial.releasePointerCapture(e.pointerId); } catch (_) {}
+        updateDropdownUI(true);
+
+        if (ddState.mode === 'hours') {
+          clearTimeout(ddAutoTimer);
+          ddAutoTimer = setTimeout(() => {
+            ddState.mode = 'minutes';
+            updateDropdownUI(true);
+          }, 320);
+        }
+      }
+      ddDial.addEventListener('pointerup', onDDEnd);
+      ddDial.addEventListener('pointercancel', onDDEnd);
+
+      // Footer buttons
+      ddBtnNow.addEventListener('click', () => {
+        const now = new Date();
+        const currH = now.getHours();
+        ddState.minutes = now.getMinutes();
+        if (state.format24) {
+          ddState.hours = currH;
+        } else {
+          ddState.period = currH >= 12 ? 'PM' : 'AM';
+          ddState.hours = currH % 12;
+          if (ddState.hours === 0) ddState.hours = 12;
+        }
+        updateDropdownUI(true);
+        playTick();
+      });
+
+      ddBtnClose.addEventListener('click', closeDropdown);
+
+      ddBtnApply.addEventListener('click', () => {
+        state.hours = ddState.hours;
+        state.minutes = ddState.minutes;
+        state.period = ddState.period;
+        updateMainClockUI(true);
+        closeDropdown();
+        showToast('Waktu berhasil diterapkan dari dropdown!');
+      });
+
+      // Click outside to close
+      document.addEventListener('click', (e) => {
+        if (ddState.isOpen && wrapper && !wrapper.contains(e.target)) {
+          closeDropdown();
+        }
+      });
+
+      // Escape to close
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && ddState.isOpen) {
+          closeDropdown();
+        }
+      });
+    }
+
+    /**
+     * VERSI 3: NATIVE HTML SELECT DROPDOWNS SETUP
+     */
+    function setupNativeSelects() {
+      const selH = document.getElementById('nativeSelectHour');
+      const selM = document.getElementById('nativeSelectMinute');
+      const selP = document.getElementById('nativeSelectPeriod');
+      if (!selH || !selM || !selP) return null;
+
+      function populateOptions() {
+        // Hours
+        selH.innerHTML = '';
+        const startH = state.format24 ? 0 : 1;
+        const endH = state.format24 ? 23 : 12;
+        for (let h = startH; h <= endH; h++) {
+          const opt = document.createElement('option');
+          opt.value = h;
+          opt.textContent = `${h.toString().padStart(2, '0')}${state.format24 ? ':00' : ''}`;
+          selH.appendChild(opt);
+        }
+        selH.value = state.hours;
+
+        // Minutes
+        selM.innerHTML = '';
+        for (let m = 0; m < 60; m += 5) {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m.toString().padStart(2, '0');
+          selM.appendChild(opt);
+        }
+        selM.value = state.minutes;
+
+        // Period
+        selP.innerHTML = '';
+        if (state.format24) {
+          const opt = document.createElement('option');
+          opt.value = '24H';
+          opt.textContent = '24-Jam';
+          selP.appendChild(opt);
+          selP.disabled = true;
+        } else {
+          selP.disabled = false;
+          ['AM', 'PM'].forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            selP.appendChild(opt);
+          });
+          selP.value = state.period;
+        }
+      }
+
+      populateOptions();
+
+      window.syncNativeSelectValues = function() {
+        selH.value = state.hours;
+        selM.value = state.minutes;
+        if (!state.format24) {
+          selP.value = state.period;
+        }
+      };
+
+      selH.addEventListener('change', () => {
+        state.hours = parseInt(selH.value, 10);
+        updateMainClockUI(true);
+        playTick();
+      });
+      selM.addEventListener('change', () => {
+        state.minutes = parseInt(selM.value, 10);
+        updateMainClockUI(true);
+        playTick();
+      });
+      selP.addEventListener('change', () => {
+        if (!state.format24) {
+          state.period = selP.value;
+          updateMainClockUI(true);
+          playTick();
+        }
+      });
+
+      return { populateOptions };
+    }
+
+    /**
+     * MAIN CARD VIEW TOGGLE (ANALOG DIAL VS DROPDOWN LIST)
+     */
+    function setupMainViewToggle() {
+      const toggleBtn = document.getElementById('mainViewToggleBtn');
+      const toggleLabel = document.getElementById('mainViewToggleLabel');
+      const analogBox = document.getElementById('mainAnalogContainer');
+      const listBox = document.getElementById('mainListContainer');
+      if (!toggleBtn || !analogBox || !listBox) return;
+
+      toggleBtn.addEventListener('click', () => {
+        state.mainView = state.mainView === 'analog' ? 'list' : 'analog';
+        if (state.mainView === 'list') {
+          toggleLabel.textContent = 'Analog';
+          analogBox.classList.add('hidden');
+          listBox.classList.remove('hidden');
+        } else {
+          toggleLabel.textContent = 'List';
+          analogBox.classList.remove('hidden');
+          listBox.classList.add('hidden');
+        }
+        updateMainClockUI(true);
+        playTick();
+      });
+    }
+
+    /**
+     * INITIALIZATION & EVENT LISTENERS
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Theme (Dark / Light mode)
+      const themeToggleBtn = document.getElementById('themeToggleBtn');
+      const sunIcon = document.getElementById('sunIcon');
+      const moonIcon = document.getElementById('moonIcon');
+
+      function applyTheme(isDark) {
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          sunIcon.classList.remove('hidden');
+          moonIcon.classList.add('hidden');
+          localStorage.setItem('theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          sunIcon.classList.add('hidden');
+          moonIcon.classList.remove('hidden');
+          localStorage.setItem('theme', 'light');
+        }
+      }
+
+      const savedTheme = localStorage.getItem('theme');
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(savedTheme ? savedTheme === 'dark' : systemDark);
+
+      themeToggleBtn.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        applyTheme(!isDark);
+      });
+
+      // 2. Sound Toggle
+      const soundBtn = document.getElementById('soundToggleBtn');
+      const soundIconOn = document.getElementById('soundIconOn');
+      const soundIconOff = document.getElementById('soundIconOff');
+
+      soundBtn.addEventListener('click', () => {
+        state.soundEnabled = !state.soundEnabled;
+        if (state.soundEnabled) {
+          soundIconOn.classList.remove('hidden');
+          soundIconOff.classList.add('hidden');
+          playTick();
+        } else {
+          soundIconOn.classList.add('hidden');
+          soundIconOff.classList.remove('hidden');
+        }
+      });
+
+      let nativeSelectControls = null;
+
+      // 3. 12H / 24H Toggle
+      const formatToggleBtn = document.getElementById('formatToggleBtn');
+      formatToggleBtn.addEventListener('click', () => {
+        state.format24 = !state.format24;
+        formatToggleBtn.textContent = state.format24 ? '24H' : '12H';
+        
+        // Convert hour value when switching
+        if (state.format24) {
+          if (state.period === 'AM') {
+            state.hours = state.hours === 12 ? 0 : state.hours;
+          } else {
+            state.hours = state.hours === 12 ? 12 : state.hours + 12;
+          }
+        } else {
+          if (state.hours === 0) {
+            state.hours = 12;
+            state.period = 'AM';
+          } else if (state.hours === 12) {
+            state.hours = 12;
+            state.period = 'PM';
+          } else if (state.hours > 12) {
+            state.hours = state.hours - 12;
+            state.period = 'PM';
+          } else {
+            state.period = 'AM';
+          }
+        }
+        if (nativeSelectControls && nativeSelectControls.populateOptions) {
+          nativeSelectControls.populateOptions();
+        }
+        updateMainClockUI(true);
+      });
+
+      // 4. Tab / Header Switchers
+      const hourBtn = document.getElementById('hourDisplayBtn');
+      const minBtn = document.getElementById('minuteDisplayBtn');
+      const tabHour = document.getElementById('tabHour');
+      const tabMin = document.getElementById('tabMinute');
+
+      hourBtn.addEventListener('click', () => transitionToMode('hours'));
+      tabHour.addEventListener('click', () => transitionToMode('hours'));
+      minBtn.addEventListener('click', () => transitionToMode('minutes'));
+      tabMin.addEventListener('click', () => transitionToMode('minutes'));
+
+      // 5. AM / PM Buttons
+      document.getElementById('btnAM').addEventListener('click', () => {
+        state.period = 'AM';
+        updateMainClockUI(true);
+      });
+      document.getElementById('btnPM').addEventListener('click', () => {
+        state.period = 'PM';
+        updateMainClockUI(true);
+      });
+
+      // 6. Action: Set to Now (Smooth Clockwise Sweep)
+      document.getElementById('btnNow').addEventListener('click', () => {
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMins = now.getMinutes();
+
+        let targetH, targetP;
+        if (state.format24) {
+          targetH = currentHours;
+          targetP = currentHours >= 12 ? 'PM' : 'AM';
+        } else {
+          targetP = currentHours >= 12 ? 'PM' : 'AM';
+          targetH = currentHours % 12;
+          if (targetH === 0) targetH = 12;
+        }
+        animatePreset(targetH, currentMins, targetP, 'Waktu disetel ke waktu sekarang!');
+      });
+
+      // 7. Action: Reset (Smooth Clockwise Sweep)
+      document.getElementById('btnReset').addEventListener('click', () => {
+        animatePreset(10, 30, 'AM', 'Waktu dikembalikan ke 10:30 AM');
+      });
+
+      // 8. Action: Copy Time
+      document.getElementById('btnCopyTime').addEventListener('click', () => {
+        let timeStr;
+        if (state.format24) {
+          timeStr = `${state.hours.toString().padStart(2, '0')}:${state.minutes.toString().padStart(2, '0')}`;
+        } else {
+          timeStr = `${state.hours.toString().padStart(2, '0')}:${state.minutes.toString().padStart(2, '0')} ${state.period}`;
+        }
+        navigator.clipboard.writeText(timeStr).then(() => {
+          showToast(`Waktu "${timeStr}" berhasil disalin!`);
+        }).catch(() => {
+          showToast(`Waktu: ${timeStr}`);
+        });
+      });
+
+      // 9. Quick Presets (Smooth Clockwise Sweep)
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const h = parseInt(btn.dataset.hour, 10);
+          const m = parseInt(btn.dataset.minute, 10);
+          const p = btn.dataset.period;
+
+          let targetH = h;
+          if (state.format24) {
+            let h24 = h;
+            if (p === 'PM' && h !== 12) h24 += 12;
+            if (p === 'AM' && h === 12) h24 = 0;
+            targetH = h24;
+          }
+
+          const labelSpan = btn.querySelector('span');
+          const label = labelSpan ? labelSpan.textContent.trim() : 'Preset';
+          animatePreset(targetH, m, p, `Preset diterapkan: ${label}`);
+        });
+      });
+
+      // 10. Setup Interactions
+      setupDialInteraction();
+      setupModalClock();
+      setupDropdownPicker();
+      nativeSelectControls = setupNativeSelects();
+      setupMainViewToggle();
+
+      // Initial Render
+      updateMainClockUI(false);
+    });
+  </script>
+</body>
+</html>
